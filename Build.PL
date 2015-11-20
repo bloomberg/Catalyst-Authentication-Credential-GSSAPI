@@ -5,15 +5,23 @@ use Module::Build;
 my $builder = Module::Build->new
   (
    dist_name           => 'Catalyst-Authentication-Credential-GSSAPI',
-   license             => 'http://apache.org/licenses/LICENSE-2.0',
+   license             => 'apache',
    dist_author         => 'Daniel Ruoso <druoso@bloomberg.net>',
    dist_version_from   => 'lib/Catalyst/Authentication/Credential/GSSAPI.pm',
    dynamic_config      => 1,
+   configure_requires  =>
+   { 'Module::Build' => '0.39' },
    extra_linker_flags  => '-lgssapi_krb5',
    needs_compiler      => 1,
    xs_files            =>
    { 'lib/Catalyst/Authentication/Credential/GSSAPI.xs' =>
      'lib/Catalyst/Authentication/Credential/GSSAPI.xs',
+   },
+   meta_merge =>
+   { resources =>
+     { 'repository' =>
+       'https://github.com/bloomberg/Catalyst-Authentication-Credential-GSSAPI',
+     },
    },
   );
 $builder->create_build_script();
