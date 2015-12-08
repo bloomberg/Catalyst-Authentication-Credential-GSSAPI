@@ -1,5 +1,5 @@
 package Catalyst::Authentication::Credential::GSSAPI;
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.3';
 
 # perform_negotiation is implemented in native code.
 use XSLoader;
@@ -34,8 +34,7 @@ sub new {
 }
 
 sub detach_negotiation {
-    my ($self, $c, $token) = @_;
-    $token ||= '';
+    my ($self, $c) = @_;
     $c->res->status(401);
     $c->res->content_type('text/plain');
     $c->res->body("GSSAPI Authentication Required");
@@ -60,17 +59,31 @@ sub authenticate {
 	my $token = MIME::Base64::decode_base64($1);
 	if ($token) {
 	    my $ret = perform_negotiation({ token => $token });
-	    use Data::Dumper;
-	    if (!$ret || $ret->{status} != 0) {
-		$c->log->error("Failed to init GSSAPI context: ".
-			       $status_codes->{$ret->{status}});
-		$self->detach_negotiation($c);
-	    }
  	    if ($ret->{output_token}) {
 		my $output_token =
 		  MIME::Base64::encode_base64($ret->{output_token},'');
 		$c->res->header('WWW-Authenticate' =>
 				"Negotiate $output_token");
+	    }
+	    if (!$ret || $ret->{status} != 0) {
+                if ($ret && $ret->{status}) {
+                    if ($status_codes->{$ret->{status}}) {
+                        if ($status_codes->{$ret->{status}} eq
+                            'GSS_S_CONTINUE_NEEDED') {
+                            $c->log->debug("GSSAPI Continue Needed");
+                        } else {
+                            $c->log->error("Failed to init GSSAPI context: ".
+                                           $status_codes->{$ret->{status}});
+                        }
+                    } else {
+                        $c->log->error("Failed to init GSSAPI context: ".
+                                       "Status code: ".$ret->{status});
+                    }
+                } else {
+                    $c->log->error("Failed to init GSSAPI context: ".
+                                   "Unspecified error");
+                }
+                $self->detach_negotiation($c);
 	    }
 	    if (my $client_name = $ret->{src_name}) {
 		$c->log->debug("Authentication::Credential::GSSAPI: ".
