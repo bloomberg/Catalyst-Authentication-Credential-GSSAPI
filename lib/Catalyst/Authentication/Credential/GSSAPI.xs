@@ -24,6 +24,8 @@
 
 #define rsc(x) sprintf(int2str,"%d",x); hv_store(ret_hash, int2str, strlen(int2str), newSVpv(#x,ks(#x)), 0)
 
+static gss_ctx_id_t context_hndl = GSS_C_NO_CONTEXT;
+
 MODULE = Catalyst::Authentication::Credential::GSSAPI PACKAGE = Catalyst::Authentication::Credential::GSSAPI PREFIX = cacgssapi_
 
 SV *
@@ -66,6 +68,17 @@ CODE:
 OUTPUT:
 RETVAL
 
+void
+cacgssapi_reset_negotiation()
+  CODE:
+{
+  int minor_status = 0;
+  if (context_hndl != GSS_C_NO_CONTEXT) {
+    gss_delete_sec_context(&minor_status, &context_hndl, GSS_C_NO_BUFFER);
+    context_hndl = GSS_C_NO_CONTEXT;
+  }
+}
+
 SV *
 cacgssapi_perform_negotiation(args_hr)
   SV* args_hr
@@ -77,7 +90,6 @@ cacgssapi_perform_negotiation(args_hr)
 
   unsigned int status = 0;
   unsigned int minor_status = 0;
-  gss_ctx_id_t context_hndl = GSS_C_NO_CONTEXT;
   gss_name_t src_name = NULL;
   gss_OID src_name_type = NULL;
   gss_buffer_desc src_name_buf_struct;

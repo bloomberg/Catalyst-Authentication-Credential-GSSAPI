@@ -1,5 +1,5 @@
 package Catalyst::Authentication::Credential::GSSAPI;
-our $VERSION = '0.0.3';
+our $VERSION = '0.0.4';
 
 # perform_negotiation is implemented in native code.
 use XSLoader;
@@ -71,6 +71,8 @@ sub authenticate {
                         if ($status_codes->{$ret->{status}} eq
                             'GSS_S_CONTINUE_NEEDED') {
                             $c->log->debug("GSSAPI Continue Needed");
+                            # detach without reset, for continuation
+                            $self->detach_negotiation($c);
                         } else {
                             $c->log->error("Failed to init GSSAPI context: ".
                                            $status_codes->{$ret->{status}});
@@ -83,8 +85,11 @@ sub authenticate {
                     $c->log->error("Failed to init GSSAPI context: ".
                                    "Unspecified error");
                 }
+                reset_negotiation();
                 $self->detach_negotiation($c);
 	    }
+            # we now we already negotiated at this point, reset it.
+            reset_negotiation();
 	    if (my $client_name = $ret->{src_name}) {
 		$c->log->debug("Authentication::Credential::GSSAPI: ".
 			       "user is $client_name");
@@ -106,10 +111,12 @@ sub authenticate {
 	    }
 	} else {
 	    $c->log->debug("No Valid GSSAPI token received");
+            reset_negotiation();
 	    $self->detach_negotiation($c);
 	}
     } else {
 	$c->log->debug("No GSSAPI token received");
+        reset_negotiation();
 	$self->detach_negotiation($c);
     }
 }

@@ -1,6 +1,15 @@
 use strict;
 use warnings;
 use Module::Build;
+use Devel::CheckLib;
+
+check_lib_or_exit(
+    lib => 'krb5',
+    header =>
+      [ qw<gssapi.h gssapi/gssapi.h gssapi/gssapi_generic.h
+           gssapi/gssapi_krb5.h gssapi/gssapi_ext.h>
+       ],
+);
 
 my $builder = Module::Build->new
   (
@@ -10,7 +19,8 @@ my $builder = Module::Build->new
    dist_version_from   => 'lib/Catalyst/Authentication/Credential/GSSAPI.pm',
    dynamic_config      => 1,
    configure_requires  =>
-   { 'Module::Build' => '0.39' },
+   { 'Module::Build' => '0.39',
+     'Devel::CheckLib' => 0 },
    requires            =>
    { perl              => '5.10.0' },
    extra_linker_flags  => '-lgssapi_krb5',
