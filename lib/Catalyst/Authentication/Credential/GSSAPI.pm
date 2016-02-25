@@ -1,5 +1,7 @@
 package Catalyst::Authentication::Credential::GSSAPI;
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.5';
+use strict;
+use warnings;
 
 # perform_negotiation is implemented in native code.
 use XSLoader;

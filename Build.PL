@@ -4,7 +4,7 @@ use Module::Build;
 use Devel::CheckLib;
 
 check_lib_or_exit(
-    lib => 'krb5',
+    lib => 'gssapi_krb5',
     header =>
       [ qw<gssapi.h gssapi/gssapi.h gssapi/gssapi_generic.h
            gssapi/gssapi_krb5.h gssapi/gssapi_ext.h>
