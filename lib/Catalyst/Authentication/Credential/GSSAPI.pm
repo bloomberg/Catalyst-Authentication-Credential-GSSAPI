@@ -37,18 +37,30 @@ sub new {
 
 sub detach_negotiation {
     my ($self, $c) = @_;
+
     $c->res->status(401);
-    $c->res->content_type('text/plain');
-    $c->res->body("GSSAPI Authentication Required");
-    die $Catalyst::DETACH;
+
+    if ($self->_config->{ dont_detach }) {
+      return 0;
+    } else {
+      $c->res->content_type('text/plain');
+      $c->res->body("GSSAPI Authentication Required");
+      die $Catalyst::DETACH;
+    }
 }
 
 sub detach_forbidden {
     my ($self, $c) = @_;
+
     $c->res->status(403);
-    $c->res->content_type('text/plain');
-    $c->res->body("Access Denied");
-    die $Catalyst::DETACH;
+
+    if ($self->_config->{ dont_detach }) {
+      return 0;
+    } else {
+      $c->res->content_type('text/plain');
+      $c->res->body("Access Denied");
+      die $Catalyst::DETACH;
+    }
 }
 
 my $status_codes = status_codes();
@@ -74,7 +86,7 @@ sub authenticate {
                             'GSS_S_CONTINUE_NEEDED') {
                             $c->log->debug("GSSAPI Continue Needed");
                             # detach without reset, for continuation
-                            $self->detach_negotiation($c);
+                            return $self->detach_negotiation($c);
                         } else {
                             $c->log->error("Failed to init GSSAPI context: ".
                                            $status_codes->{$ret->{status}});
@@ -88,7 +100,7 @@ sub authenticate {
                                    "Unspecified error");
                 }
                 reset_negotiation();
-                $self->detach_negotiation($c);
+                return $self->detach_negotiation($c);
 	    }
             # we now we already negotiated at this point, reset it.
             reset_negotiation();
@@ -105,22 +117,22 @@ sub authenticate {
 		if ($user) {
 		    return $user;
 		} else {
-		    $c->log->error("user $client_name not found");
-		    $self->detach_forbidden($c);
+      $c->log->error("user $client_name not found");
+      return $self->detach_forbidden($c);
 		}
 	    } else {
 		$c->log->debug("No user in token");
-		$self->detach_negotiation($c);
+		return $self->detach_negotiation($c);
 	    }
 	} else {
 	    $c->log->debug("No Valid GSSAPI token received");
             reset_negotiation();
-	    $self->detach_negotiation($c);
+	    return $self->detach_negotiation($c);
 	}
     } else {
 	$c->log->debug("No GSSAPI token received");
         reset_negotiation();
-	$self->detach_negotiation($c);
+        return $self->detach_negotiation($c);
     }
 }
 
