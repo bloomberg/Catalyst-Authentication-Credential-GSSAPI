@@ -98,9 +98,10 @@ sub authenticate {
 		if ($self->_config->{strip_realm}) {
 		    $client_name =~ s/\@.+$//;
 		}
-		my $user = $realm->find_user
-		  ({ %$authinfo,
-		     $self->_config->{username_field} => $client_name });
+		my $user = $realm->find_user(
+			{ %$authinfo, $self->_config->{username_field} => $client_name }, 
+			$c
+		);
 		if ($user) {
 		    return $user;
 		} else {
