@@ -1,5 +1,5 @@
 package Catalyst::Authentication::Credential::GSSAPI;
-our $VERSION = '0.0.5';
+our $VERSION = '0.0.6';
 use strict;
 use warnings;
 
